@@ -45,8 +45,21 @@ struct LoginView: View {
     LoginView()
 }
 
+#Preview("iPhone portrait stacked", traits: .fixedLayout(width: 390, height: 844)) {
+    LoginView()
+        .environment(\.horizontalSizeClass, .compact)
+        .environment(\.verticalSizeClass, .regular)
+}
+
 #Preview("Small iPhone landscape", traits: .fixedLayout(width: 568, height: 320)) {
     LoginView()
+        .environment(\.horizontalSizeClass, .compact)
+        .environment(\.verticalSizeClass, .compact)
+}
+
+#Preview("Narrow iPhone landscape", traits: .fixedLayout(width: 500, height: 280)) {
+    LoginView()
+        .environment(\.horizontalSizeClass, .compact)
         .environment(\.verticalSizeClass, .compact)
 }
 

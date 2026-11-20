@@ -8,7 +8,7 @@ Adapt the completed Week 09 Firebase Todo List app to work on iPhones in portrai
 
 | Screen / file | Changes |
 | --- | --- |
-| `HeaderView.swift` | `AdaptiveAuthLayout` uses an `HStack` on wider iPad/landscape windows and a `VStack` on narrow windows. GeometryReader sizes the panels as proportions of the available window, with no fixed maximum content width. Spacers distribute the form vertically. The header hides its decorative icon and subtitle at compact height, as the lesson hides secondary content in landscape. |
+| `HeaderView.swift` | `AdaptiveAuthLayout` uses a centered HStack on iPhone landscape and wider iPad windows. iPhone portrait uses a centered VStack with natural header/form heights. GeometryReader sizes columns as proportions of the available window, with no fixed maximum content width. Spacers distribute the form vertically. The same icon, title and subtitle appear in both orientations. |
 | `LoginView.swift` | Uses the shared adaptive layout, scrollable content, flexible form widths, and `NavigationStack` for single-column navigation. Keeps login and registration navigation. |
 | `RegisterView.swift` | Uses the same shared layout without a fixed vertical offset. All inputs and the create account button remain accessible by scrolling. |
 | `ContentView.swift` | The authenticated TabView fills its container directly. |
@@ -22,27 +22,27 @@ Adapt the completed Week 09 Firebase Todo List app to work on iPhones in portrai
 
 ### 1. GeometryReader and size classes
 
-`AdaptiveAuthLayout` and the profile screen read their available width and height rather than assuming the physical screen size. Following the demo's adaptive form, they check compact/regular size classes. When the horizontal class is regular or the vertical class is compact, a window at least 520 points wide uses an HStack. Narrower windows use a VStack. A ScrollView keeps content reachable when the keyboard, large text or rotation reduces the space.
+`AdaptiveAuthLayout` and the profile screen read their available width and height rather than assuming the physical screen size. Following the demo's adaptive form, they check compact/regular size classes. Compact vertical size class (iPhone landscape) selects a centered HStack. Regular horizontal size class selects the same arrangement when the container is at least 520 points wide. Compact-width, regular-height iPhone portrait selects a VStack. A ScrollView keeps content reachable when the keyboard, large text or rotation reduces the space.
 
 ```swift
 @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 @Environment(\.verticalSizeClass) private var verticalSizeClass
 
 GeometryReader { geometry in
-    let useColumns = geometry.size.width >= 520 &&
-        (horizontalSizeClass == .regular || verticalSizeClass == .compact)
+    let useColumns = verticalSizeClass == .compact ||
+        (horizontalSizeClass == .regular && geometry.size.width >= 520)
     // HStack for columns, VStack otherwise.
     // Panel widths and minimum heights come from geometry.size.
 }
 ```
 
-The 520-point threshold is a layout choice to leave usable room for both columns. Narrow iPad windows use the stacked arrangement. Login and registration values remain in their existing StateObject view models above the conditional layout, so the entered text survives rearrangement; keyboard focus should be checked on a device when switching between stack types.
+The 520-point threshold applies to regular-width windows; compact-height iPhone landscape keeps columns even when side safe areas leave less width. Narrow iPad windows with regular height use the stacked arrangement. Login and registration values remain in their existing StateObject view models above the conditional layout, so the entered text survives rearrangement; keyboard focus should be checked on a device when switching between stack types.
 
 ### 2. Flexible sizing and navigation
 
 The earlier fixed maximum widths of 420–800 points left broad unused margins on iPad. These caps have been removed. Like the demo's GeometryReader example, the authentication header and profile avatar use a share of the available width. Flexible frames fill the rest of the window, with 16-point padding in compact width and 32-point padding in regular width.
 
-On wide layouts, both panels use at least the available viewport height. On stacked layouts, the header uses at least 30% and the form uses the remaining height after spacing. These are minimum heights, so larger text can grow and scroll. Spacers center the authentication fields and place the profile logout control below its details. Semantic fonts support Dynamic Type, and leading/trailing alignment follows the layout direction.
+On wide layouts, both panels use at least the available viewport height and the HStack centers them vertically, including when one panel grows taller. On stacked layouts, the header and form keep their natural heights, one above the other, and the VStack centers the group in the available viewport. This removes the earlier forced 30%/70% height split on iPhone portrait. Minimum heights let larger content grow and scroll. Spacers center authentication fields and the avatar inside their panels. Semantic fonts support Dynamic Type, and leading/trailing alignment follows the layout direction.
 
 The task list fills its tab, and the new-item Form fills its sheet. The app keeps its existing TabView and NavigationStack navigation because it has no separate selected-item detail screen requiring the demo's NavigationSplitView.
 
@@ -52,7 +52,7 @@ The task list fills its tab, and the new-item Form fills its sheet. The app keep
 
 Profile uses the same size-class/width rule as authentication. Each profile row follows the supplied ViewThatFits example: an HStack first, then a VStack if the full label and value cannot fit side by side. Long names, email addresses and larger text can therefore wrap.
 
-Named Xcode previews cover small iPhone landscape, iPad landscape, narrow windows and accessibility text sizes in the login, registration, profile and new-item view files.
+Named Xcode previews cover explicitly stacked iPhone portrait, centered iPhone landscape (including a 500-point-wide container), iPad landscape, narrow windows and accessibility text sizes.
 
 ## Run in Xcode
 
@@ -86,6 +86,8 @@ service cloud.firestore {
 Run the following on an iPhone (portrait, landscape left, landscape right) and iPad (portrait and both landscape directions). Try a small iPhone and a resizable iPad window as well if available.
 
 - [ ] Login header and fields fit the screen; scroll with the keyboard visible.
+- [ ] In iPhone landscape, login/register panels use the same side-by-side arrangement as iPad, with centered content and the full header visible.
+- [ ] In iPhone portrait, the header/avatar sits above the naturally sized fields/details in a centered vertical stack.
 - [ ] On iPad, authentication and profile panels span the window with normal outer padding; the task list has no narrow centered column.
 - [ ] Register screen is reachable; all fields and the create account button remain accessible after rotation.
 - [ ] Create an account, sign in, and verify the Home/Profile/Logout tabs are visible or accessible.

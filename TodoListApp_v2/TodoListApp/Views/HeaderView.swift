@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct HeaderView: View {
-    @Environment(\.verticalSizeClass) private var verticalSizeClass
     let title: String
     let subtitle: String
     let backColor: Color
@@ -9,19 +8,15 @@ struct HeaderView: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            if verticalSizeClass != .compact {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.largeTitle)
-            }
+            Image(systemName: "checkmark.circle.fill")
+                .font(.largeTitle)
             Text(title)
                 .font(.largeTitle)
                 .bold()
                 .fixedSize(horizontal: false, vertical: true)
-            if verticalSizeClass != .compact {
-                Text(subtitle)
-                    .font(.title3)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+            Text(subtitle)
+                .font(.title3)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .foregroundStyle(.white)
         .multilineTextAlignment(.center)
@@ -46,24 +41,29 @@ struct AdaptiveAuthLayout<Content: View>: View {
             let padding: CGFloat = horizontalSizeClass == .regular ? 32 : 16
             let availableWidth = max(0, geometry.size.width - padding * 2)
             let availableHeight = max(0, geometry.size.height - padding * 2)
-            let useColumns = geometry.size.width >= 520 &&
-                (horizontalSizeClass == .regular || verticalSizeClass == .compact)
+            let columnsWidth = max(0, availableWidth - 24)
+            let useColumns = verticalSizeClass == .compact ||
+                (horizontalSizeClass == .regular && geometry.size.width >= 520)
 
             ScrollView {
                 if useColumns {
                     // Like GeometryReaderView in the demo, use a share of the window width.
-                    HStack(alignment: .top, spacing: 24) {
+                    HStack(alignment: .center, spacing: 24) {
                         HeaderView(title: title, subtitle: subtitle, backColor: color,
                                    minimumHeight: availableHeight)
-                            .frame(width: (availableWidth - 24) * 0.4)
+                            .frame(width: columnsWidth * 0.4)
                         form(minimumHeight: availableHeight)
                     }
+                    .frame(maxWidth: .infinity, minHeight: availableHeight,
+                           alignment: .center)
                 } else {
                     VStack(spacing: 24) {
-                        HeaderView(title: title, subtitle: subtitle, backColor: color,
-                                   minimumHeight: availableHeight * 0.3)
-                        form(minimumHeight: max(0, availableHeight * 0.7 - 24))
+                        HeaderView(title: title, subtitle: subtitle, backColor: color)
+                        form(minimumHeight: 0)
                     }
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, minHeight: availableHeight,
+                           alignment: .center)
                 }
             }
             .padding(padding)
@@ -80,8 +80,9 @@ struct AdaptiveAuthLayout<Content: View>: View {
                 .frame(maxWidth: .infinity)
             Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity, minHeight: max(0, minimumHeight - 40),
+               alignment: .center)
         .padding(20)
-        .frame(maxWidth: .infinity, minHeight: minimumHeight)
         .background(Color(.secondarySystemGroupedBackground),
                     in: RoundedRectangle(cornerRadius: 20))
     }

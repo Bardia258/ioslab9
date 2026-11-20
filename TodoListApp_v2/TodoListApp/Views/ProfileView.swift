@@ -31,23 +31,28 @@ private struct ProfileDetailsView: View {
             let padding: CGFloat = horizontalSizeClass == .regular ? 32 : 16
             let availableWidth = max(0, geometry.size.width - padding * 2)
             let availableHeight = max(0, geometry.size.height - padding * 2)
-            let useColumns = geometry.size.width >= 520 &&
-                (horizontalSizeClass == .regular || verticalSizeClass == .compact)
+            let columnsWidth = max(0, availableWidth - 24)
+            let useColumns = verticalSizeClass == .compact ||
+                (horizontalSizeClass == .regular && geometry.size.width >= 520)
 
             ScrollView {
                 if useColumns {
-                    HStack(alignment: .top, spacing: 24) {
-                        avatar(size: (availableWidth - 24) * 0.22,
+                    HStack(alignment: .center, spacing: 24) {
+                        avatar(size: columnsWidth * 0.22,
                                minimumHeight: availableHeight)
-                            .frame(width: (availableWidth - 24) * 0.35)
+                            .frame(width: columnsWidth * 0.35)
                         details(minimumHeight: availableHeight)
                     }
+                    .frame(maxWidth: .infinity, minHeight: availableHeight,
+                           alignment: .center)
                 } else {
                     VStack(spacing: 24) {
-                        avatar(size: availableWidth * 0.35,
-                               minimumHeight: availableHeight * 0.3)
-                        details(minimumHeight: max(0, availableHeight * 0.7 - 24))
+                        avatar(size: availableWidth * 0.35, minimumHeight: 0)
+                        details(minimumHeight: 0)
                     }
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, minHeight: availableHeight,
+                           alignment: .center)
                 }
             }
             .padding(padding)
@@ -67,8 +72,9 @@ private struct ProfileDetailsView: View {
                 .accessibilityHidden(true)
             Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity, minHeight: max(0, minimumHeight - 40),
+               alignment: .center)
         .padding(.vertical, 20)
-        .frame(maxWidth: .infinity, minHeight: minimumHeight)
         .background(.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 20))
     }
 
@@ -118,6 +124,16 @@ private struct ProfileDetailsView: View {
                                       email: "alex.morgan@example.com", joined: 0), logout: {})
             .navigationTitle("Profile")
     }
+}
+
+#Preview("iPhone portrait stacked", traits: .fixedLayout(width: 390, height: 844)) {
+    NavigationStack {
+        ProfileDetailsView(user: User(id: "preview", name: "Alex Morgan",
+                                      email: "alex.morgan@example.com", joined: 0), logout: {})
+            .navigationTitle("Profile")
+    }
+    .environment(\.horizontalSizeClass, .compact)
+    .environment(\.verticalSizeClass, .regular)
 }
 
 #Preview("Narrow iPad window, large text", traits: .fixedLayout(width: 375, height: 700)) {
