@@ -44,3 +44,17 @@ struct LoginView: View {
 #Preview {
     LoginView()
 }
+
+#Preview("Small iPhone landscape", traits: .fixedLayout(width: 568, height: 320)) {
+    LoginView()
+        .environment(\.verticalSizeClass, .compact)
+}
+
+#Preview("iPad landscape", traits: .fixedLayout(width: 1024, height: 768)) {
+    LoginView()
+}
+
+#Preview("Large text", traits: .fixedLayout(width: 375, height: 667)) {
+    LoginView()
+        .environment(\.dynamicTypeSize, .accessibility3)
+}

@@ -12,7 +12,7 @@ struct SingleItemView: View {
     let item: TodoListItem
     
     var body: some View {
-        HStack {
+        HStack(alignment: .top, spacing: 16) {
            VStack(alignment: .leading) {
               Text(item.title)
                  .font(.body)
@@ -23,8 +23,7 @@ struct SingleItemView: View {
                  .foregroundColor(Color.secondary)
                  .fixedSize(horizontal: false, vertical: true)
            }
-
-           Spacer()
+           .frame(maxWidth: .infinity, alignment: .leading)
 
            Button {
               // action

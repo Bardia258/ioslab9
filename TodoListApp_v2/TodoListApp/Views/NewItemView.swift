@@ -1,46 +1,55 @@
 import SwiftUI
-import FirebaseFirestore
 
 struct NewItemView: View {
     @StateObject var viewModel = NewItemViewViewModel()
     @Binding var newItemPresented: Bool
     @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Task") {
-                    TextField("Title", text: $viewModel.title)
-                }
+            GeometryReader { geometry in
+                let useCompactPicker = verticalSizeClass == .compact ||
+                    geometry.size.height < 600 || geometry.size.width < 360 ||
+                    dynamicTypeSize.isAccessibilitySize
 
-                Section("Due Date") {
-                    if verticalSizeClass == .compact {
-                        DatePicker("Due Date", selection: $viewModel.dueDate)
-                            .datePickerStyle(.compact)
-                    } else {
-                        DatePicker("Due Date", selection: $viewModel.dueDate)
-                            .datePickerStyle(.graphical)
+                Form {
+                    Section("Task") {
+                        TextField("Title", text: $viewModel.title, axis: .vertical)
+                            .lineLimit(1...3)
+                    }
+
+                    Section("Due Date") {
+                        if useCompactPicker {
+                            // Separate controls fit narrow windows and larger text.
+                            DatePicker("Due Date", selection: $viewModel.dueDate,
+                                       displayedComponents: .date)
+                                .datePickerStyle(.compact)
+                                .labelsHidden()
+                            DatePicker("Due Time", selection: $viewModel.dueDate,
+                                       displayedComponents: .hourAndMinute)
+                                .datePickerStyle(.compact)
+                                .labelsHidden()
+                        } else {
+                            DatePicker("Due Date", selection: $viewModel.dueDate)
+                                .datePickerStyle(.graphical)
+                        }
                     }
                 }
-
-                Button("Save") {
-                    if viewModel.canSave {
-                        viewModel.save()
-                        newItemPresented = false
-                    } else {
-                        viewModel.showAlert = true
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+                .scrollDismissesKeyboard(.interactively)
+                .frame(maxWidth: 600)
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: 600)
-            .frame(maxWidth: .infinity)
+            .background(Color(.systemGroupedBackground))
             .navigationTitle("New Item")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { newItemPresented = false }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save", action: save)
+                        .bold()
                 }
             }
             .alert(isPresented: $viewModel.showAlert) {
@@ -48,8 +57,27 @@ struct NewItemView: View {
             }
         }
     }
+
+    private func save() {
+        if viewModel.canSave {
+            viewModel.save()
+            newItemPresented = false
+        } else {
+            viewModel.showAlert = true
+        }
+    }
 }
 
 #Preview {
     NewItemView(newItemPresented: .constant(true))
+}
+
+#Preview("iPhone landscape", traits: .fixedLayout(width: 568, height: 320)) {
+    NewItemView(newItemPresented: .constant(true))
+        .environment(\.verticalSizeClass, .compact)
+}
+
+#Preview("Narrow window, large text", traits: .fixedLayout(width: 320, height: 568)) {
+    NewItemView(newItemPresented: .constant(true))
+        .environment(\.dynamicTypeSize, .accessibility3)
 }

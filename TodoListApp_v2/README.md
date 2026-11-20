@@ -8,32 +8,37 @@ Adapt the completed Week 09 Firebase Todo List app to work on iPhones in portrai
 
 | Screen / file | Changes |
 | --- | --- |
-| `HeaderView.swift` | Removed the oversized screen-width-based rotated header and negative offset. The replacement header sizes itself to its container. Added a reusable `AdaptiveAuthLayout` for login and registration. |
+| `HeaderView.swift` | Container-based `AdaptiveAuthLayout` switches between columns and a stack without replacing the fields. Centers content when space permits, scrolls in short windows or above the keyboard, and stacks at accessibility text sizes. Header text wraps. |
 | `LoginView.swift` | Uses the shared adaptive layout, scrollable content, flexible form widths, and `NavigationStack` for single-column navigation. Keeps login and registration navigation. |
 | `RegisterView.swift` | Uses the same shared layout without a fixed vertical offset. All inputs and the create account button remain accessible by scrolling. |
-| `TodoListView.swift` | Uses `NavigationStack` and a centered list with a maximum width of 760 points. Keeps the Firestore query, add sheet and swipe-to-delete. |
-| `NewItemView.swift` | Uses a scrollable `Form`, navigation title and cancel button instead of the large fixed top padding. Uses a compact date picker in compact-height environments and a graphical picker otherwise. The form is capped at 600 points. |
-| `ProfileView.swift` | Uses a vertical layout on narrow portrait screens and side-by-side avatar/details for regular-width or compact-height layouts. Scrollable content, wrapping text and a smaller avatar in compact height help prevent clipping. |
-| `SingleItemView.swift` | Long titles and dates can wrap; the completion button has a minimum 44-point target and an accessibility label. |
-| `project.pbxproj` | Enabled portrait, upside-down portrait, landscape left and landscape right in both Debug and Release for iPhone and iPad. iOS/device restrictions still apply (some iPhones do not support upside-down portrait). |
+| `TodoListView.swift` | Uses `NavigationStack` and a centered list with a maximum width of 760 points. The add sheet uses form sizing on iPad, and the add button has an accessibility label. Keeps the Firestore query and swipe-to-delete. |
+| `NewItemView.swift` | Scrollable `Form` capped at 600 points, with Save and Cancel in the navigation bar. Long titles can use up to three visible lines. Separate compact date/time controls fit short or narrow windows and accessibility text sizes; larger containers use a graphical picker. |
+| `ProfileView.swift` | Measures the available container for stacked or side-by-side avatar/details, and uses a stack at accessibility text sizes. Scrollable, width-limited content, wrapping text and a smaller avatar in short windows help prevent clipping. Profile layout previews use sample data without a Firebase request. |
+| `SingleItemView.swift` | Long titles and dates can wrap using the available row width; the completion button stays at the top with a minimum 44-point target and an accessibility label. |
+| `project.pbxproj` | Already enables portrait, upside-down portrait, landscape left and landscape right in both Debug and Release for iPhone and iPad. iOS/device restrictions still apply (some iPhones do not support upside-down portrait). |
 
 ## How the adaptive layout works
 
 ### 1. GeometryReader and size classes
 
-`AdaptiveAuthLayout` reads its actual available width rather than assuming the physical screen size. A width of at least 700 points, or a compact vertical size class with at least 520 points of width, selects an `HStack` with the header beside the fields. Otherwise, a `VStack` puts the header above the fields. A `ScrollView` keeps the fields and buttons reachable when the keyboard or landscape orientation reduces available height.
+`AdaptiveAuthLayout` reads its actual available width and height rather than assuming the physical screen size. A width of at least 700 points, or a short container with at least 600 points of width, places the header beside the fields. Otherwise, it puts the header above the fields. Accessibility text sizes always use a stack. A `ScrollView` keeps the fields and buttons reachable when the keyboard or landscape orientation reduces available height; dragging can dismiss the keyboard interactively.
 
 ```swift
 @Environment(\.verticalSizeClass) private var verticalSizeClass
+@Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
 GeometryReader { geometry in
-    let wide = geometry.size.width >= 700 ||
-        (verticalSizeClass == .compact && geometry.size.width >= 520)
-    // HStack for wide containers; VStack otherwise.
+    let short = verticalSizeClass == .compact || geometry.size.height < 450
+    let wide = !dynamicTypeSize.isAccessibilitySize &&
+        (geometry.size.width >= 700 || (short && geometry.size.width >= 600))
+    let layout = wide
+        ? AnyLayout(HStackLayout(alignment: .center, spacing: 24))
+        : AnyLayout(VStackLayout(spacing: 24))
+    // Use layout { ... } for the same header and fields in either arrangement.
 }
 ```
 
-The size thresholds are layout choices for this lab, not fixed definitions of iPhone or iPad. Narrow iPad windows can also use the stacked layout.
+The size thresholds are layout choices for this lab, not fixed definitions of iPhone or iPad. Narrow iPad windows can also use the stacked layout. [Apple's `AnyLayout`](https://developer.apple.com/documentation/swiftui/anylayout) preserves subview identity when the container changes, keeping the same form fields during rotation.
 
 ### 2. Flexible sizing and navigation
 
@@ -41,7 +46,11 @@ The size thresholds are layout choices for this lab, not fixed definitions of iP
 
 ### 3. Compact landscape forms
 
-`NewItemView` reads `verticalSizeClass` to choose between `.compact` and `.graphical` date picker styles. The form scrolls if its content exceeds the available space. This also handles sheets with limited height. Profile uses horizontal and vertical size classes to select a layout.
+`NewItemView` uses compact date/time pickers when the vertical size class is compact, the available height is below 600 points, the width is below 360 points, or the text size is an accessibility size. Otherwise, it uses a graphical picker. The form scrolls if its content exceeds the available space. Save and Cancel stay in the navigation bar. The sheet requests [form presentation sizing](https://developer.apple.com/documentation/swiftui/presentationsizing/form) for an appropriate width on iPad.
+
+Profile places its avatar beside the details only when the container is at least 600 points wide and text is not at an accessibility size. Its avatar shrinks when height is limited, including resized iPad windows whose vertical size class remains regular.
+
+Named Xcode previews cover small iPhone landscape, iPad landscape, narrow windows and accessibility text sizes in the login, registration, profile and new-item view files.
 
 ## Run in Xcode
 
@@ -78,12 +87,14 @@ Run the following on an iPhone (portrait, landscape left, landscape right) and i
 - [ ] Register screen is reachable; all fields and the create account button remain accessible after rotation.
 - [ ] Create an account, sign in, and verify the Home/Profile/Logout tabs are visible or accessible.
 - [ ] Add a todo using the plus button, enter a title and date, and rotate while editing. Save and verify the todo appears.
+- [ ] Resize the add-item sheet or iPad window; verify date/time controls fit and Save/Cancel stay reachable with the keyboard open.
 - [ ] Try saving an empty title and verify the original validation alert appears.
 - [ ] Mark a todo complete/incomplete; swipe to delete it.
 - [ ] Verify a long title wraps and the profile information remains readable.
 - [ ] Log out and verify the app returns to login.
 - [ ] Verify state and entered text survive rotation; try a larger Dynamic Type setting.
+- [ ] At an accessibility text size, verify authentication and profile use stacked layouts and long text scrolls without clipping.
 
 ## Validation performed
 
-All Swift files passed `swiftc -frontend -parse` (syntax-only validation). The project settings were updated for both build configurations. Full compilation, iOS simulator layout checks and live Firebase verification require macOS/Xcode and your Firebase configuration; they have not been performed here. The original Firebase and MVVM logic, including its existing error-handling behavior, was intentionally left unchanged because this assignment is about adaptive UI.
+Source review and `git diff --check` were performed. The existing device-family and orientation settings were checked for both build configurations. This Windows environment has neither Swift nor Xcode, so the updated Swift files have not been compiled or run in an iOS simulator. Full compilation, device layout checks and live Firebase verification require macOS/Xcode and your Firebase configuration. The Firebase and MVVM logic, including its existing error-handling behavior, remains unchanged because this assignment is about adaptive UI.

@@ -41,3 +41,8 @@ struct RegisterView: View {
 #Preview {
     NavigationStack { RegisterView() }
 }
+
+#Preview("iPhone landscape", traits: .fixedLayout(width: 667, height: 375)) {
+    NavigationStack { RegisterView() }
+        .environment(\.verticalSizeClass, .compact)
+}

@@ -12,8 +12,10 @@ struct HeaderView: View {
             Text(title)
                 .font(.largeTitle)
                 .bold()
+                .fixedSize(horizontal: false, vertical: true)
             Text(subtitle)
                 .font(.title3)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .foregroundStyle(.white)
         .multilineTextAlignment(.center)
@@ -27,6 +29,7 @@ struct HeaderView: View {
 // Measure the container, not the physical device's screen.
 struct AdaptiveAuthLayout<Content: View>: View {
     @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let title: String
     let subtitle: String
     let color: Color
@@ -38,30 +41,28 @@ struct AdaptiveAuthLayout<Content: View>: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let wide = geometry.size.width >= 700 ||
-                (verticalSizeClass == .compact && geometry.size.width >= 520)
+            let short = verticalSizeClass == .compact || geometry.size.height < 450
+            let wide = !dynamicTypeSize.isAccessibilitySize &&
+                (geometry.size.width >= 700 || (short && geometry.size.width >= 600))
+            // Changing the layout keeps the same fields and their focus/state.
+            let layout = wide
+                ? AnyLayout(HStackLayout(alignment: .center, spacing: 24))
+                : AnyLayout(VStackLayout(spacing: 24))
 
             ScrollView {
-                if wide {
-                    HStack(alignment: .center, spacing: 24) {
-                        header
-                            .frame(maxWidth: 340)
-                        content()
-                            .frame(maxWidth: 420)
-                    }
-                    .frame(maxWidth: 800)
-                    .padding(20)
-                    .frame(maxWidth: .infinity)
-                } else {
-                    VStack(spacing: 24) {
-                        header
-                        content()
-                    }
-                    .frame(maxWidth: 420)
-                    .padding(20)
-                    .frame(maxWidth: .infinity)
+                layout {
+                    header
+                        .frame(maxWidth: wide ? 340 : .infinity)
+                    content()
+                        .frame(maxWidth: 420)
                 }
+                .frame(maxWidth: wide ? 800 : 420)
+                .frame(maxWidth: .infinity,
+                       minHeight: max(0, geometry.size.height - 40),
+                       alignment: short ? .top : .center)
+                .padding(20)
             }
+            .scrollDismissesKeyboard(.interactively)
         }
     }
 }

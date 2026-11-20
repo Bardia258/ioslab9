@@ -49,9 +49,11 @@ struct TodoListView: View {
             } label: {
                Image(systemName: "plus")
             }
+            .accessibilityLabel("Add todo")
          }
          .sheet(isPresented: $viewModel.showingNewItemView) {
             NewItemView(newItemPresented: $viewModel.showingNewItemView)
+                .presentationSizing(.form)
          }
       }
    }
