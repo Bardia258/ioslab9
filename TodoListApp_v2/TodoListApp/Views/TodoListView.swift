@@ -26,22 +26,17 @@ struct TodoListView: View {
    
    var body: some View {
       NavigationStack {
-         VStack {
-             List(items) { item in
-                SingleItemView(item: item)
-                     .swipeActions(content: {
-                        Button ("Delete") {
-                           viewModel.delete(id: item.id)
-                        }
-                        .tint(.red)
-                     })
-
-             }
-             .listStyle(PlainListStyle())
-             .frame(maxWidth: 760)
-             .frame(maxWidth: .infinity)
-
+         List(items) { item in
+            SingleItemView(item: item)
+                .swipeActions(content: {
+                   Button("Delete") {
+                      viewModel.delete(id: item.id)
+                   }
+                   .tint(.red)
+                })
          }
+         .listStyle(PlainListStyle())
+         .frame(maxWidth: .infinity, maxHeight: .infinity)
          .navigationTitle("Todo List")
          .toolbar {
             Button {
@@ -53,7 +48,6 @@ struct TodoListView: View {
          }
          .sheet(isPresented: $viewModel.showingNewItemView) {
             NewItemView(newItemPresented: $viewModel.showingNewItemView)
-                .presentationSizing(.form)
          }
       }
    }

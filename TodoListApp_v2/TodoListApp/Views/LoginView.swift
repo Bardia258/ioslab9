@@ -52,6 +52,14 @@ struct LoginView: View {
 
 #Preview("iPad landscape", traits: .fixedLayout(width: 1024, height: 768)) {
     LoginView()
+        .environment(\.horizontalSizeClass, .regular)
+        .environment(\.verticalSizeClass, .regular)
+}
+
+#Preview("iPad portrait", traits: .fixedLayout(width: 768, height: 1024)) {
+    LoginView()
+        .environment(\.horizontalSizeClass, .regular)
+        .environment(\.verticalSizeClass, .regular)
 }
 
 #Preview("Large text", traits: .fixedLayout(width: 375, height: 667)) {

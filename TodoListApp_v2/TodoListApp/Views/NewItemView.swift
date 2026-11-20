@@ -37,8 +37,7 @@ struct NewItemView: View {
                     }
                 }
                 .scrollDismissesKeyboard(.interactively)
-                .frame(maxWidth: 600)
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("New Item")
@@ -80,4 +79,10 @@ struct NewItemView: View {
 #Preview("Narrow window, large text", traits: .fixedLayout(width: 320, height: 568)) {
     NewItemView(newItemPresented: .constant(true))
         .environment(\.dynamicTypeSize, .accessibility3)
+}
+
+#Preview("iPad landscape", traits: .fixedLayout(width: 1024, height: 768)) {
+    NewItemView(newItemPresented: .constant(true))
+        .environment(\.horizontalSizeClass, .regular)
+        .environment(\.verticalSizeClass, .regular)
 }

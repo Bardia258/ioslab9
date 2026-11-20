@@ -20,24 +20,23 @@ struct ContentView: View {
     
     @ViewBuilder
     var accountView: some View {
-        VStack {
-            TabView {
-                TodoListView(userId: viewModel.currentUserId)
-                    .tabItem {
-                        Label("Home", systemImage: "house")
-                    }
-                
-                ProfileView()
-                    .tabItem {
-                        Label("Profile", systemImage: "person.circle")
-                    }
-                
-                LogoutView()
-                    .tabItem {
-                        Label("Logout", systemImage: "figure.walk.departure")
-                    }
-            }
+        TabView {
+            TodoListView(userId: viewModel.currentUserId)
+                .tabItem {
+                    Label("Home", systemImage: "house")
+                }
+
+            ProfileView()
+                .tabItem {
+                    Label("Profile", systemImage: "person.circle")
+                }
+
+            LogoutView()
+                .tabItem {
+                    Label("Logout", systemImage: "figure.walk.departure")
+                }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
